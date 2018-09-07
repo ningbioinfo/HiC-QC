@@ -48,10 +48,13 @@ names = os.listdir(start_dir+"/bowtie_results/bwt2/")
 
 ## set output layout
 c0 = ["Sequenced_Read_Pairs", "Normal_Reads", "Chimeric_Unambiguous","Ligations", "Unmapped", "Low_Mapping_Qual", "Unique_Aligned_Pairs", "Valid_Contacts",
-      "Duplicate_Contacts", "Intra_Fragment", "Inter_Chromosomal", "Intra_Chromosomal", "Intra_Short_Range",
-      "Intra_Long_Range", "Read_Pair_Type"]
+      "Duplicate_Contacts", "Intra_Fragment", "Inter_Chromosomal", "Intra_Chromosomal", "Intra_Short_Range (< 20kb)",
+      "Intra_Long_Range (> 20kb)", "Read_Pair_Type"]
 
-output = {'Metrics':c0}
+c_last = ["-", "-", "-", "30% - 40%", "less than 10%", "less than 10%", "-", "-", "less than 10%", "1% - 5%", "aroung or less than 20%", "aroung 60 - 70%",
+        "around 20%", "at least 15%, good if more than 40%", "roughly 25% each"]
+
+output = {'Metrics':c0, 'Recommand':c_last}
 
 ## get info from the results of HiC-Pro
 for name in names:
@@ -250,5 +253,6 @@ for name in names:
 
 df = pd.DataFrame(output)
 names.insert(0, 'Metrics')
+names.insert(-1, 'Recommand')
 output_df = df[names]
 output_df.to_csv(args["out"], sep = "\t", index = False)
