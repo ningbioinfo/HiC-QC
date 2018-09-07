@@ -130,8 +130,8 @@ for name in names:
     for line in open(mRSstat_files[0], 'r'):
         if re.search('^Dangling_end_pairs', line):
             intra_fragment = line.strip().split('\t')[1]
-            intra_fragment_percent_of_all = str(round(int(intra_long)/float(sequenced_read_pairs)*100,2))+"%"
-            intra_fragment_percent_of_bam = str(round(int(intra_long)/float(unique_aligned_pairs)*100,2))+"%"
+            intra_fragment_percent_of_all = str(round(int(intra_fragment)/float(sequenced_read_pairs)*100,2))+"%"
+            intra_fragment_percent_of_bam = str(round(int(intra_fragment)/float(unique_aligned_pairs)*100,2))+"%"
         if re.search('_RR', line):
             L_type = line.strip().split('\t')[1]
             L_type_percent = str(round(int(L_type)/float(valid_contact)*100,2))+"%"
@@ -253,6 +253,6 @@ for name in names:
 
 df = pd.DataFrame(output)
 names.insert(0, 'Metrics')
-names.insert(-1, 'Recommand')
+names.insert(1, 'Recommand')
 output_df = df[names]
 output_df.to_csv(args["out"], sep = "\t", index = False)
