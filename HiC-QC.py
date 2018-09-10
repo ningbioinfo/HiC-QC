@@ -49,7 +49,7 @@ names = os.listdir(start_dir+"/bowtie_results/bwt2/")
 ## set output layout
 c0 = ["Sequenced_Read_Pairs", "Normal_Reads", "Chimeric_Unambiguous","Ligations", "Unmapped", "Low_Mapping_Qual", "Unique_Aligned_Pairs", "Valid_Contacts",
       "Duplicate_Contacts", "Intra_Fragment", "Inter_Chromosomal", "Intra_Chromosomal", "Intra_Short_Range (< 20kb)",
-      "Intra_Long_Range (> 20kb)", "Read_Pair_Type"]
+      "Intra_Long_Range (> 20kb)", "Read_Pair_Type (L-I-O-R)"]
 
 c_last = ["-", "-", "-", "30% - 40%", "less than 10%", "less than 10%", "-", "-", "less than 10%", "1% - 5%", "aroung or less than 20%", "aroung 60 - 70%",
         "around 20%", "at least 15%, good if more than 40%", "roughly 25% each"]
