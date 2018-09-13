@@ -163,7 +163,7 @@ for name in names:
 
     #get ligation site from read
 
-    cmd = 'zgrep -c "GATCGATC" ' + path_to_raw + '*fastq.gz'
+    cmd = 'zgrep -c ' + ligation_site + ' ' + path_to_raw + '*fastq.gz'
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     process_out = process.communicate()[0].decode('ascii')
 
