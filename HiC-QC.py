@@ -1,6 +1,7 @@
 # HiC-QC
 
 import os
+from os import listdir
 from glob import glob
 import re
 import locale
@@ -8,6 +9,11 @@ locale.setlocale(locale.LC_ALL, 'en_US')
 import subprocess
 import pandas as pd
 import argparse
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+plt.style.use('seaborn-whitegrid')
+
 
 '''
 output format
@@ -15,6 +21,10 @@ colnames:
 "Sequenced_Read_Pairs", "Ligations", "Unmapped", "Low_Mapping_Qual", "Unique_Aligned_Pairs", "Valid_Contacts",
 "Duplicate_Contacts", "Intra_Fragment", "Inter_Chromosomal", "Intra_Chromosomal", "Intra_Short_Range",
 "Intra_Long_Range", "Read_Pair_Type"
+'''
+
+'''
+9 Oct update: QC the coverage of data, measure and plot the distribution of average raw read count against distance.
 '''
 
 def formatting(value):
@@ -249,6 +259,83 @@ for name in names:
                   read_pair_type]
 
     output.update({name: c1})
+
+    # distance vs. average read count check
+
+    samplemxdir = start_dir + '/' + 'hic_results/matrix/' + name
+    resolutions = listdir(samplemxdir + "/iced")
+    for res in resolutions:
+        index = samplemxdir + "/raw/" + res + "/" + name + "_" + res + "_abs.bed"
+        matrix = samplemxdir + "/iced/" + res + "/" + name + "_" + res + "_iced.matrix"
+    # build the index
+        binlib = {}
+        with open(index, 'r') as bed:
+            for line in bed:
+                cor = [line.strip().split("\t")[0], int(line.strip().split("\t")[1]), int(line.strip().split("\t")[2])]
+                binname = line.strip().split("\t")[3]
+                binlib[binname]=cor
+
+
+    # subsitute by index
+        interaction = pd.read_csv(matrix, header=None, sep= "\t")
+        interaction.columns = ['bin1', 'bin2', 'read_count']
+
+        chr1 = []
+        start1 = []
+        end1 = []
+        for i in interaction['bin1']:
+            key = str(int(i))
+            chr1.append(binlib[key][0])
+            start1.append(binlib[key][1])
+            end1.append(binlib[key][2])
+
+        chr2 = []
+        start2 = []
+        end2 = []
+        for i in interaction['bin2']:
+            key = str(int(i))
+            chr2.append(binlib[key][0])
+            start2.append(binlib[key][1])
+            end2.append(binlib[key][2])
+
+        interaction['chr1']=chr1
+        interaction['start1']=start1
+        interaction['end1']=end1
+        interaction['chr2']=chr2
+        interaction['start2']=start2
+        interaction['end2']=end2
+
+        interaction = interaction[['chr1', 'start1', 'end1', 'chr2', 'start2', 'end2', 'read_count']]
+
+    # get only cis interactions
+        cis_int = interaction[interaction.chr1 == interaction.chr2]
+
+    # get a distance column (kb)
+        distance = (cis_int.start2 - cis_int.start1)/1000
+        distance = [int(x) for x in distance.tolist()]
+        cis_int = cis_int.assign(dis = distance)
+
+    # distance vs. average interaction count
+        dva = {}
+        for i in list(set(distance)):
+            df = cis_int.loc[cis_int['dis'] == i]
+            b = len(df)
+            a = sum(df.read_count)
+            c = a/b
+
+            dva[i] = c
+
+    # plot
+        plt.scatter(list(dva.keys()),list(dva.values()))
+        plt.xlabel("Distance(20kb)")
+        plt.ylabel("average raw read count")
+        plt.title(name + " at " + res + " resolution")
+
+    # save plot
+        plt.savefig(name + "_at_" + res + "_resolution.png")
+
+    # clear plot
+        plt.clf()
 
 
 df = pd.DataFrame(output)
