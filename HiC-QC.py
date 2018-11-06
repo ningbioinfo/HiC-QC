@@ -44,16 +44,18 @@ def percent_formatting2(value,percent1,percent2):
 parser = argparse.ArgumentParser(description='HiC QC script')
 parser.add_argument('--data', nargs='?', help='path to the output directory of HiC-Pro pipeline')
 parser.add_argument('--out', default='HiC_QC.csv', help='The QC output forms, by default its named HiC_QC.csv')
+parser.add_argument('--excel', default='0', help='Set this to one if you want an excel output')
+parser.add_argument('--excel_name', default='HiC_QC.xlsx', help='The output excel file name of the QC result, by default it is HiC_QC.xlsx')
 
 
 ## read arguments
 args = vars(parser.parse_args())
 
 ## get input
-start_dir = args["data"]
+start_dir = args["data"] + "/"
 
 ## get hic experiment names
-names = os.listdir(start_dir+"/bowtie_results/bwt2/")
+sample_names = os.listdir(start_dir+"/bowtie_results/bwt2/")
 
 
 ## set output layout
@@ -61,13 +63,13 @@ c0 = ["Sequenced_Read_Pairs", "Normal_Reads", "Chimeric_Unambiguous","Ligations"
       "Duplicate_Contacts", "Intra_Fragment", "Inter_Chromosomal", "Intra_Chromosomal", "Intra_Short_Range (< 20kb)",
       "Intra_Long_Range (> 20kb)", "Read_Pair_Type (L-I-O-R)"]
 
-c_last = ["-", "-", "-", "30% - 40%", "less than 10%", "less than 10%", "-", "-", "less than 10%", "1% - 5%", "aroung or less than 20%", "aroung 60 - 70%",
+c_last = ["-", "-", "-", "30% - 40%", "less than 10%", "less than 10%", "-", "-", "less than 10%", "less than 20%", "aroung or less than 20%", "aroung 60 - 70%",
         "around 20%", "at least 15%, good if more than 40%", "roughly 25% each"]
 
 output = {'Metrics':c0, 'Recommand':c_last}
 
 ## get info from the results of HiC-Pro
-for name in names:
+for name in sample_names:
     # Sequenced_Read_Pairs, Unmapped, Unique_aligned_pairs, Low_Mapping_Qual
     # these can be find in *.mpairstat file in bwt2
 
@@ -339,7 +341,87 @@ for name in names:
 
 
 df = pd.DataFrame(output)
-names.insert(0, 'Metrics')
-names.insert(1, 'Recommand')
-output_df = df[names]
-output_df.to_csv(args["out"], sep = "\t", index = False)
+df.to_csv(args["out"], sep = "\t", index = False)
+
+# excel output
+if args['excel'] == '1':
+    writer = pd.ExcelWriter(args['excel_name'], engine="xlsxwriter")
+    df.to_excel(writer, sheet_name="Sheet1", index=False)
+
+    workbook = writer.book
+    worksheet = writer.sheets['Sheet1']
+
+    # Green fill with dark green text.
+    greenformat = workbook.add_format({'bg_color':   '#C6EFCE',
+                               'font_color': '#006100'})
+    # Light red fill with dark red text.
+    redformat = workbook.add_format({'bg_color':   '#FFC7CE',
+                               'font_color': '#9C0006'})
+
+
+    for name in sample_names:
+        print(name)
+        col_idx = sample_names.index(name) + 2
+        # conditions
+        # Ligation
+        if 30 <= float(df.iloc[3][name].split('%')[0]) <= 40 and 30 <= float(df.iloc[3][name].split('%')[1].split(' - ')[1]) <= 40:
+            worksheet.conditional_format(3+1,col_idx,3+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(3+1,col_idx,3+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+        # unmapped
+        if float(df.iloc[4][name].split('(')[1].rstrip('%)')) <= 10:
+            worksheet.conditional_format(4+1,col_idx,4+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(4+1,col_idx,4+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+        # mapping qual
+        if float(df.iloc[5][name].split('(')[1].rstrip('%)')) <= 0:
+            worksheet.conditional_format(5+1,col_idx,5+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(5+1,col_idx,5+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+        # duplicate
+        if float(df.iloc[8][name].split(' / ')[1].rstrip('%)')) <= 10:
+            worksheet.conditional_format(8+1,col_idx,8+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(8+1,col_idx,8+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+        # intra fragment
+        if float(df.iloc[9][name].split('%')[0].split('(')[1]) <= 20:
+            worksheet.conditional_format(9+1,col_idx,9+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(9+1,col_idx,9+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+        # inter chrom
+        if 15 <=float(df.iloc[10][name].split(' / ')[1].rstrip('%)')) <= 25:
+            worksheet.conditional_format(10+1,col_idx,10+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(10+1,col_idx,10+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+        # intra chrom
+        if 55 <= float(df.iloc[11][name].split(' / ')[1].rstrip('%)')) <= 75:
+            worksheet.conditional_format(11+1,col_idx,11+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(11+1,col_idx,11+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+        # intra short
+        if 15 <= float(df.iloc[12][name].split(' / ')[1].rstrip('%)')) <= 25:
+            worksheet.conditional_format(12+1,col_idx,12+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(12+1,col_idx,12+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+        # intra long
+        if float(df.iloc[13][name].split(' / ')[1].rstrip('%)')) >= 15:
+            worksheet.conditional_format(13+1,col_idx,13+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(13+1,col_idx,13+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+        # rpt
+        rpt = df.iloc[14][name].rstrip('%').split('%-')
+        if 24 <= float(rpt[0]) <= 26 and 24 <= float(rpt[1]) <= 26 and 24 <= float(rpt[2]) <= 26 and 24 <= float(rpt[3]) <= 26:
+            worksheet.conditional_format(14+1,col_idx,14+1,col_idx,{'type':'no_blanks', 'format':greenformat})
+        else:
+            worksheet.conditional_format(14+1,col_idx,14+1,col_idx,{'type':'no_blanks', 'format':redformat})
+
+    writer.save()
