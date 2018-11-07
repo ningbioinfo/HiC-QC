@@ -351,8 +351,9 @@ for name in sample_names:
 
 
     if args['tad'] == '1':
+        src_dir = os.path.dirname(os.path.abspath(__file__))
         try:
-            open('callTADs.R','r')
+            open(src_dir+'/callTADs.R','r')
         except:
             print('can not find the callTADs.R to call TADs')
             exit()
@@ -378,7 +379,7 @@ for name in sample_names:
         tad_plot = name + '_' + res + '_TADs.png'
 
     # run R script
-        cmd = " ".join(['Rscript callTADs.R', mfile, bfile, res, tad_chr, tad_bed, tad_plot])
+        cmd = " ".join(['Rscript', src_dir+'/callTADs.R', mfile, bfile, res, tad_chr, tad_bed, tad_plot])
         process = subprocess.Popen(cmd, shell=True, stdout=open(os.devnull, 'wb'))
         process.communicate()
 
