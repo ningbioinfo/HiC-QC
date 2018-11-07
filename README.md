@@ -33,6 +33,7 @@ The input of this script is the output directory of [HiC-Pro](https://github.com
   - ![Example](excel_output_example.png)
 
 4. if you set `tad` to 1, you will also get and bed file including all the TADs and a TADs plot.
+  - ![Example](TADs_example.png)
 
 ## help page
 
