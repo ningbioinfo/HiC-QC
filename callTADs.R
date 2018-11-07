@@ -1,6 +1,12 @@
+if (!require("tidyverse")){
+  install.packages("tidyverse")
+}
 library(tidyverse)
 library(ggplot2)
 if (!require("rGMAP")) {
+  if (!require("devtools")){
+    install.packages("devtools")
+  }
   library(devtools)
   install_github("ningbioinfostruggling/rGMAP")
 }
