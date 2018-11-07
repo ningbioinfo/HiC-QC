@@ -30,6 +30,7 @@ The input of this script is the output directory of [HiC-Pro](https://github.com
   - Will plot all the resolutions that were used in your HiC-Pro analysis
 
 3. if you set `--excel` to 1, you will also get an excel file with colour marked on the sample stat with read indicating it's bad and green indicating it's good.
+  - ![Example](excel_output_example.png)
 
 4. if you set `tad` to 1, you will also get and bed file including all the TADs and a TADs plot.
 
