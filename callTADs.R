@@ -1,5 +1,9 @@
 library(tidyverse)
 library(ggplot2)
+if (!require("rGMAP")) {
+  library(devtools)
+  install_github("ningbioinfostruggling/rGMAP")
+}
 library(rGMAP)
 
 options(warn=-1)
