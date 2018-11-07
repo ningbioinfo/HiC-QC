@@ -44,19 +44,26 @@ def percent_formatting2(value,percent1,percent2):
 parser = argparse.ArgumentParser(description='HiC QC script')
 parser.add_argument('--data', nargs='?', help='path to the output directory of HiC-Pro pipeline')
 parser.add_argument('--out', default='HiC_QC.csv', help='The QC output forms, by default its named HiC_QC.csv')
-parser.add_argument('--excel', default='0', help='Set this to one if you want an excel output')
+parser.add_argument('--excel', default='0', help='Set this to 1 if you want an excel output')
 parser.add_argument('--excel_name', default='HiC_QC.xlsx', help='The output excel file name of the QC result, by default it is HiC_QC.xlsx')
+parser.add_argument('--tad', default='0', help='Set this to 1 if you want to plot TADs')
+parser.add_argument('--tad_chr', default='chr1', help='by default it will call tads for chr1, if you want the whole genome, set this to "all", but it will take a while ')
+
 
 
 ## read arguments
 args = vars(parser.parse_args())
 
 ## get input
+
 start_dir = args["data"] + "/"
+
+print("Your intput directory is ", start_dir)
 
 ## get hic experiment names
 sample_names = os.listdir(start_dir+"/bowtie_results/bwt2/")
 
+print("You have ", len(sample_names), " samples, and they are: ", sample_names)
 
 ## set output layout
 c0 = ["Sequenced_Read_Pairs", "Normal_Reads", "Chimeric_Unambiguous","Ligations", "Unmapped", "Low_Mapping_Qual", "Unique_Aligned_Pairs", "Valid_Contacts",
@@ -68,7 +75,9 @@ c_last = ["-", "-", "-", "30% - 40%", "less than 10%", "less than 10%", "-", "-"
 
 output = {'Metrics':c0, 'Recommand':c_last}
 
+
 ## get info from the results of HiC-Pro
+print("Extracting info from HiC-Pro output.")
 for name in sample_names:
     # Sequenced_Read_Pairs, Unmapped, Unique_aligned_pairs, Low_Mapping_Qual
     # these can be find in *.mpairstat file in bwt2
@@ -263,6 +272,7 @@ for name in sample_names:
     output.update({name: c1})
 
     # distance vs. average read count check
+    print("plotting...")
 
     samplemxdir = start_dir + '/' + 'hic_results/matrix/' + name
     resolutions = listdir(samplemxdir + "/iced")
@@ -340,11 +350,47 @@ for name in sample_names:
         plt.clf()
 
 
+    if args['tad'] == '1':
+        try:
+            open('callTADs.R','r')
+        except:
+            print('can not find the callTADs.R to call TADs')
+            exit()
+
+    #### Call TADs
+    # call tad and plot.
+    # need : 1. matrix file 2. bin file
+        print("calling TADs....")
+
+    # matrix file
+        samplemxdir = start_dir + '/' + 'hic_results/matrix/' + name
+        resolutions = listdir(samplemxdir + "/iced")
+    ## highest resolution
+        res = str(min(list(map(int,resolutions))))
+        mfile = samplemxdir + '/iced/' + res + '/' + name + '_' + res + '_iced.matrix'
+    # bin file
+        bfile = samplemxdir + '/raw/' + res + '/' + name + '_' + res + '_abs.bed'
+    # chr
+        tad_chr = "chr1"
+    # tad.bed
+        tad_bed = name + '_' + res + '_TADs.bed'
+    # tad.plot
+        tad_plot = name + '_' + res + '_TADs.png'
+
+    # run R script
+        cmd = " ".join(['Rscript callTADs.R', mfile, bfile, res, tad_chr, tad_bed, tad_plot])
+        process = subprocess.Popen(cmd, shell=True, stdout=open(os.devnull, 'wb'))
+        process.communicate()
+
+
+
+# write output table to txt
 df = pd.DataFrame(output)
 df.to_csv(args["out"], sep = "\t", index = False)
 
 # excel output
 if args['excel'] == '1':
+    print("Writing QC results to excel file...")
     writer = pd.ExcelWriter(args['excel_name'], engine="xlsxwriter")
     df.to_excel(writer, sheet_name="Sheet1", index=False)
 
@@ -425,3 +471,5 @@ if args['excel'] == '1':
             worksheet.conditional_format(14+1,col_idx,14+1,col_idx,{'type':'no_blanks', 'format':redformat})
 
     writer.save()
+
+print("Finished!")
