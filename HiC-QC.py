@@ -376,7 +376,7 @@ for name in sample_names:
     # tad.bed
         tad_bed = name + '_' + res + '_TADs.bed'
     # tad.plot
-        tad_plot = name + '_' + res + '_TADs.png'
+        tad_plot = name + '_' + res + '_TADs.pdf'
 
     # run R script
         cmd = " ".join(['Rscript', src_dir+'/callTADs.R', mfile, bfile, res, tad_chr, tad_bed, tad_plot])
