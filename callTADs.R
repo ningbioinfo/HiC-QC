@@ -56,7 +56,7 @@ hic_tad$tads %>%
 
 pp <- plotdom(hic, hic_tad$hierTads, start_bin = 1, end_bin = 500, cthr = 20, resl = res)
 
-png(filename = args[6])
+pdf(filename = args[6])
 
 pp$p2 + ggtitle(paste("TADs and sub-TADs with", res, "resolution")) +
   theme_bw() +
