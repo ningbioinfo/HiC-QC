@@ -339,7 +339,8 @@ for name in sample_names:
 
     # plot
         plt.scatter(list(dva.keys()),list(dva.values()))
-        plt.xlabel("Distance(20kb)")
+        plt.yscale('log')
+        plt.xlabel("Distance")
         plt.ylabel("average raw read count")
         plt.title(name + " at " + res + " resolution")
 
