@@ -179,23 +179,26 @@ for name in sample_names:
     for line in open(config_file[0], 'r'):
         if re.search('^LIGATION_SITE', line):
             ligation_site = line.strip().split(' = ')[1]
+    if len(ligation_site) == 0:
+        ligation_seq = "NA"
+        ligation_percent = "NA"
+    else:
+        path_to_raw = start_dir+"rawdata/"+name+"/"
 
-    path_to_raw = start_dir+"rawdata/"+name+"/"
+        #get ligation site from read
 
-    #get ligation site from read
+        cmd = 'zgrep -c ' + ligation_site + ' ' + path_to_raw + '*fastq.gz'
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        process_out = process.communicate()[0].decode('ascii')
 
-    cmd = 'zgrep -c ' + ligation_site + ' ' + path_to_raw + '*fastq.gz'
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    process_out = process.communicate()[0].decode('ascii')
-
-    ligation_seq = []
-    for i in process_out.strip().split('\n'):
-        ligation_seq.append(i.split(':')[1])
+        ligation_seq = []
+        for i in process_out.strip().split('\n'):
+            ligation_seq.append(i.split(':')[1])
 
 
-    ligation_percent1 = str(round(int(ligation_seq[0])/float(sequenced_read_pairs)*100,2))+"%"
-    ligation_percent2 = str(round(int(ligation_seq[1])/float(sequenced_read_pairs)*100,2))+"%"
-    ligation_percent = ligation_percent1+"(R1) - "+ligation_percent2+"(R2)"
+        ligation_percent1 = str(round(int(ligation_seq[0])/float(sequenced_read_pairs)*100,2))+"%"
+        ligation_percent2 = str(round(int(ligation_seq[1])/float(sequenced_read_pairs)*100,2))+"%"
+        ligation_percent = ligation_percent1+"(R1) - "+ligation_percent2+"(R2)"
 
 
     # normal reads & chimeric reads
@@ -233,27 +236,32 @@ for name in sample_names:
     normal_read = formatting(normal_read[0])+" ("+str(round(int(normal_read[0])/float(sequenced_read_pairs)*100,2))+"%,R1) - "+formatting(normal_read[1])+" ("+str(round(int(normal_read[1])/float(sequenced_read_pairs)*100,2))+"%,R2)"
 
     # 2.
-    chimeric_reads = []
-    chimeric_trim_reads = []
-    pattern1 = "*"+pair1_name+"*.unmap.fastq"
-    pattern2 = "*"+pair1_name+"*.unmap_trimmed.fastq"
-    pattern3 = "*"+pair2_name+"*.unmap.fastq"
-    pattern4 = "*"+pair2_name+"*.unmap_trimmed.fastq"
+    if len(ligation_site) == 0:
+        chimeric_reads = "NA"
+        chimeric_trim_reads = "NA
+        chimeric_unambiguous = "NA"
+    else:
+        chimeric_reads = []
+        chimeric_trim_reads = []
+        pattern1 = "*"+pair1_name+"*.unmap.fastq"
+        pattern2 = "*"+pair1_name+"*.unmap_trimmed.fastq"
+        pattern3 = "*"+pair2_name+"*.unmap.fastq"
+        pattern4 = "*"+pair2_name+"*.unmap_trimmed.fastq"
 
-    for dir,_,_ in os.walk(global_bam_dir):
-        chimeric_reads.extend(glob(os.path.join(dir,pattern1)))
-        chimeric_reads.extend(glob(os.path.join(dir,pattern3)))
-        chimeric_trim_reads.extend(glob(os.path.join(dir,pattern2)))
-        chimeric_trim_reads.extend(glob(os.path.join(dir,pattern4)))
+        for dir,_,_ in os.walk(global_bam_dir):
+            chimeric_reads.extend(glob(os.path.join(dir,pattern1)))
+            chimeric_reads.extend(glob(os.path.join(dir,pattern3)))
+            chimeric_trim_reads.extend(glob(os.path.join(dir,pattern2)))
+            chimeric_trim_reads.extend(glob(os.path.join(dir,pattern4)))
 
-    chimeric_unambiguous = []
-    for i in [0,1]:
-        cmd = 'diff '+chimeric_trim_reads[i]+' '+chimeric_reads[i]+' | grep -c "^<"'
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        process_out = process.communicate()[0].decode('ascii')
-        chimeric_unambiguous.append(int(int(process_out.strip())/2))
+        chimeric_unambiguous = []
+        for i in [0,1]:
+            cmd = 'diff '+chimeric_trim_reads[i]+' '+chimeric_reads[i]+' | grep -c "^<"'
+            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+            process_out = process.communicate()[0].decode('ascii')
+            chimeric_unambiguous.append(int(int(process_out.strip())/2))
 
-    chimeric_unambiguous = formatting(chimeric_unambiguous[0])+" ("+str(round(int(chimeric_unambiguous[0])/float(sequenced_read_pairs)*100,2))+"%,R1) - "+formatting(chimeric_unambiguous[1])+" ("+str(round(int(chimeric_unambiguous[1])/float(sequenced_read_pairs)*100,2))+"%,R2)"
+        chimeric_unambiguous = formatting(chimeric_unambiguous[0])+" ("+str(round(int(chimeric_unambiguous[0])/float(sequenced_read_pairs)*100,2))+"%,R1) - "+formatting(chimeric_unambiguous[1])+" ("+str(round(int(chimeric_unambiguous[1])/float(sequenced_read_pairs)*100,2))+"%,R2)"
 
 
     c1 = [formatting(sequenced_read_pairs), normal_read, chimeric_unambiguous, ligation_percent,
