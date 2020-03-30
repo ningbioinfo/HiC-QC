@@ -85,7 +85,7 @@ for name in sample_names:
 
     #def get_first_4_row(start_dir, sample):
     mpairstat_files = []
-    pattern   = name+"*.mpairstat"
+    pattern = name+"*.mpairstat"
 
     for dir,_,_ in os.walk(start_dir):
         mpairstat_files.extend(glob(os.path.join(dir,pattern)))
@@ -171,15 +171,17 @@ for name in sample_names:
     # Ligation
 
     config_file = []
-    pattern = "config*.txt"
+    pattern = "*.config"
 
     for dir,_,_ in os.walk(start_dir):
         config_file.extend(glob(os.path.join(dir,pattern)))
 
     for line in open(config_file[0], 'r'):
         if re.search('^LIGATION_SITE', line):
-            ligation_site = line.strip().split(' = ')[1]
-    if len(ligation_site) == 0:
+            ligation_line = line.strip().split(' = ')
+
+
+    if len(ligation_line) == 1:
         ligation_seq = "NA"
         ligation_percent = "NA"
     else:
@@ -204,7 +206,7 @@ for name in sample_names:
     # normal reads & chimeric reads
     # get pair name
     config_file = []
-    pattern = "config*.txt"
+    pattern = "*.config"
 
     for dir,_,_ in os.walk(start_dir):
         config_file.extend(glob(os.path.join(dir,pattern)))
@@ -236,9 +238,9 @@ for name in sample_names:
     normal_read = formatting(normal_read[0])+" ("+str(round(int(normal_read[0])/float(sequenced_read_pairs)*100,2))+"%,R1) - "+formatting(normal_read[1])+" ("+str(round(int(normal_read[1])/float(sequenced_read_pairs)*100,2))+"%,R2)"
 
     # 2.
-    if len(ligation_site) == 0:
+    if len(ligation_line) == 1:
         chimeric_reads = "NA"
-        chimeric_trim_reads = "NA
+        chimeric_trim_reads = "NA"
         chimeric_unambiguous = "NA"
     else:
         chimeric_reads = []
