@@ -242,6 +242,10 @@ for name in sample_names:
         chimeric_reads = "NA"
         chimeric_trim_reads = "NA"
         chimeric_unambiguous = "NA"
+        intra_fragment = 0
+        intra_fragment_percent_of_all = 0
+        intra_fragment_percent_of_bam = 0
+
     else:
         chimeric_reads = []
         chimeric_trim_reads = []
